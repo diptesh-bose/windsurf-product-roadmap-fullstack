@@ -210,19 +210,36 @@
   width: 100%;
   height: 100%;
   pointer-events: none;
-  z-index: 0;
+  z-index: 100;
+  overflow: visible;
 }
 
 .dependency-line {
-  stroke: #666;
-  stroke-width: 2;
   fill: none;
-  marker-end: url(#arrowhead);
+  stroke: rgba(107, 119, 140, 0.5);
+  stroke-width: 2.5;
+  stroke-dasharray: none;
+  pointer-events: stroke;
+}
+
+.dependency-dot {
+  fill: #fff;
+  stroke: rgba(107, 119, 140, 0.8);
+  stroke-width: 2.5;
+  pointer-events: all;
+  cursor: pointer;
+}
+
+.dependency-dot:hover {
+  stroke-width: 3;
+  transform: scale(1.2);
+  transition: all 0.2s ease-in-out;
 }
 
 .dependency-line:hover {
-  stroke: #333;
+  stroke: rgba(107, 119, 140, 0.8);
   stroke-width: 3;
+  transition: all 0.2s ease-in-out;
 }
 
 /* Legend */
@@ -337,4 +354,22 @@
 /* Weekend cell highlight */
 .weekend-cell {
   background-color: rgba(0, 0, 0, 0.04);
+}
+
+/* Controls */
+.gantt-controls {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 10px 20px;
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.gantt-controls .MuiFormControlLabel-root {
+  margin-right: 0;
+}
+
+.gantt-controls .MuiSwitch-root {
+  margin-right: 8px;
 }
