@@ -1,0 +1,87 @@
+.release-list {
+  padding: 20px;
+}
+
+.list-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.release-name {
+  font-weight: 500;
+  color: var(--dark-color);
+  text-decoration: none;
+  font-size: 16px;
+}
+
+.release-name:hover {
+  color: var(--primary-color);
+}
+
+.release-description {
+  font-size: 12px;
+  color: #666;
+  margin-top: 5px;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+  text-transform: capitalize;
+}
+
+.status-planned {
+  background-color: #e1bee7;
+  color: #6a1b9a;
+}
+
+.status-in-progress {
+  background-color: #fff9c4;
+  color: #f57f17;
+}
+
+.status-completed {
+  background-color: #c8e6c9;
+  color: #2e7d32;
+}
+
+.status-cancelled {
+  background-color: #ffcdd2;
+  color: #c62828;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 5px;
+}
+
+.btn-sm {
+  padding: 4px 8px;
+  font-size: 12px;
+}
+
+.delete-confirm {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 40px 20px;
+}
+
+.empty-state p {
+  margin-bottom: 10px;
+  color: #666;
+}
+
+.empty-state .btn {
+  margin-top: 15px;
+}

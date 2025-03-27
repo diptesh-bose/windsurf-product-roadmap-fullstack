@@ -1,0 +1,37 @@
+.gantt-view {
+  padding: 20px;
+}
+
+.gantt-view .page-title {
+  margin-bottom: 20px;
+}
+
+/* Custom styling for scheduler */
+.gantt-view .MuiPaper-root {
+  box-shadow: var(--box-shadow);
+  border-radius: var(--border-radius);
+  overflow: hidden;
+}
+
+/* Custom appointment styling */
+.gantt-view .MuiAppointmentsAppointment-root {
+  border-radius: 4px;
+}
+
+/* Loading and error states */
+.loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 200px;
+  font-size: 16px;
+  color: #666;
+}
+
+.error-message {
+  background-color: #ffebee;
+  color: #c62828;
+  padding: 15px;
+  border-radius: var(--border-radius);
+  margin-bottom: 20px;
+}
