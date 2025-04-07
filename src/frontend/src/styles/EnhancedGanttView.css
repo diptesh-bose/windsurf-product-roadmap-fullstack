@@ -216,30 +216,23 @@
 
 .dependency-line {
   fill: none;
-  stroke: rgba(107, 119, 140, 0.5);
-  stroke-width: 2.5;
-  stroke-dasharray: none;
+  stroke: rgba(107, 119, 140, 0.7);
+  stroke-width: 1.5;
+  stroke-dasharray: 6 3;
   pointer-events: stroke;
+  animation: dash 1s linear infinite;
 }
 
-.dependency-dot {
-  fill: #fff;
-  stroke: rgba(107, 119, 140, 0.8);
-  stroke-width: 2.5;
-  pointer-events: all;
-  cursor: pointer;
+@keyframes dash {
+  to {
+    stroke-dashoffset: -9;
+  }
 }
 
-.dependency-dot:hover {
-  stroke-width: 3;
-  transform: scale(1.2);
-  transition: all 0.2s ease-in-out;
-}
-
-.dependency-line:hover {
-  stroke: rgba(107, 119, 140, 0.8);
-  stroke-width: 3;
-  transition: all 0.2s ease-in-out;
+.dependency-group:hover .dependency-line {
+  stroke: rgba(107, 119, 140, 0.9);
+  stroke-width: 2;
+  animation-duration: 0.7s;
 }
 
 /* Legend */
@@ -372,4 +365,19 @@
 
 .gantt-controls .MuiSwitch-root {
   margin-right: 8px;
+}
+
+.enhanced-gantt-view.modern {
+  background: #ffffff;
+  padding: 20px;
+}
+
+.gantt-container {
+  overflow: hidden;
+  border-radius: 8px;
+}
+
+.gantt-body {
+  position: relative;
+  min-height: 400px;
 }

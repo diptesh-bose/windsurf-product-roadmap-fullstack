@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import axios from 'axios';
 import { format, addDays, differenceInDays, startOfWeek, addWeeks } from 'date-fns';
 import Paper from '@mui/material/Paper';
@@ -12,35 +12,32 @@ const EnhancedGanttView = () => {
   const [releases, setReleases] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [startDate, setStartDate] = useState(startOfWeek(new Date()));
-  const [endDate, setEndDate] = useState(addWeeks(startOfWeek(new Date()), 4));
+  const [startDate] = useState(startOfWeek(new Date()));
+  const [endDate] = useState(addWeeks(startOfWeek(new Date()), 4));
   const [hoveredTask, setHoveredTask] = useState(null);
-  const [useSampleDependencies, setUseSampleDependencies] = useState(false); // Default to false - only show real dependencies
+  const [useSampleDependencies, setUseSampleDependencies] = useState(false);
   const ganttRef = useRef(null);
 
-  // Color mapping for feature status
-  const statusColors = {
+  const statusColors = useMemo(() => ({
     backlog: '#8c7ae6',
     in_progress: '#00b894',
     completed: '#4cd137',
     blocked: '#e84393',
     review: '#fdcb6e',
-  };
+  }), []);
 
-  // Icon mapping for feature types
-  const typeIcons = {
+  const typeIcons = useMemo(() => ({
     bug: '🐛',
     feature: '✨',
     improvement: '⚡',
     documentation: '📝',
     security: '🔒'
-  };
+  }), []);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        // Fetch features and releases
         const [featuresRes, releasesRes] = await Promise.all([
           axios.get('/api/features'),
           axios.get('/api/releases')
@@ -53,48 +50,40 @@ const EnhancedGanttView = () => {
           color: statusColors[feature.status] || '#a5b1c2'
         }));
         
+        // Create sample dependencies if enabled
         let dependencyArray = [];
-        
-        // First try to get dependencies from the database
-        featuresData.forEach(feature => {
-          if (feature.dependencies && Array.isArray(feature.dependencies) && feature.dependencies.length > 0) {
-            feature.dependencies.forEach(depId => {
-              // Make sure both features exist before creating a dependency
-              const dependsOnFeature = featuresData.find(f => f.id === depId);
-              if (dependsOnFeature) {
-                dependencyArray.push({
-                  id: `${depId}-${feature.id}`,
-                  predecessorId: depId,
-                  successorId: feature.id
-                });
-              }
-            });
-          }
-        });
-        
-        // If sample dependencies are enabled and no real dependencies exist, create sample ones
-        if (dependencyArray.length === 0 && useSampleDependencies) {
-          console.log('Creating sample dependencies for demonstration');
-          
-          // If we have at least 2 features, create sample dependencies
-          if (featuresData.length >= 2) {
-            // Find features that have start and end dates
-            const validFeatures = featuresData.filter(f => f.startDate && f.endDate);
-            
-            if (validFeatures.length >= 2) {
-              // Create dependencies between consecutive features
-              for (let i = 0; i <validFeatures.length - 1; i++) {
-                dependencyArray.push({
-                  id: `${validFeatures[i].id}-${validFeatures[i+1].id}`,
-                  predecessorId: validFeatures[i].id,
-                  successorId: validFeatures[i+1].id
-                });
-              }
+        if (useSampleDependencies) {
+          // Create sample dependencies between consecutive features
+          for (let i = 0; i < featuresData.length - 1; i++) {
+            if (featuresData[i].startDate && featuresData[i].endDate && 
+                featuresData[i + 1].startDate && featuresData[i + 1].endDate) {
+              dependencyArray.push({
+                id: `${featuresData[i].id}-${featuresData[i + 1].id}`,
+                predecessorId: featuresData[i].id,
+                successorId: featuresData[i + 1].id
+              });
             }
           }
+        } else {
+          // Use real dependencies from the features data
+          featuresData.forEach(feature => {
+            if (feature.dependencies && Array.isArray(feature.dependencies)) {
+              feature.dependencies.forEach(depId => {
+                const dependsOnFeature = featuresData.find(f => f.id === depId);
+                if (dependsOnFeature) {
+                  dependencyArray.push({
+                    id: `${depId}-${feature.id}`,
+                    predecessorId: depId,
+                    successorId: feature.id
+                  });
+                }
+              });
+            }
+          });
         }
 
-        console.log(`Displaying ${dependencyArray.length} dependencies:`, dependencyArray);
+        console.log('Dependencies:', dependencyArray); // Debug log
+        
         setFeatures(featuresData);
         setDependencies(dependencyArray);
         setReleases(releasesRes.data);
@@ -107,170 +96,73 @@ const EnhancedGanttView = () => {
     };
 
     fetchData();
-  }, [useSampleDependencies]);
-
-  // Separate useEffect for drawing dependency lines
-  useEffect(() => {
-    if (!loading && features.length > 0) {
-      console.log('Drawing dependencies:', { 
-        features: features.length,
-        dependencies: dependencies.length 
-      });
-      
-      // Only draw dependencies if we have any
-      if (dependencies.length > 0) {
-        requestAnimationFrame(() => {
-          drawDependencyLines();
-        });
-      } else {
-        console.log('No dependencies to draw');
-        // Clear any existing dependency lines
-        if (ganttRef.current) {
-          const svg = ganttRef.current.querySelector('.gantt-dependency-lines');
-          if (svg) {
-            while (svg.firstChild) {
-              svg.removeChild(svg.firstChild);
-            }
-          }
-        }
-      }
-    }
-  }, [loading, features, dependencies]);
+  }, [useSampleDependencies, statusColors]);
 
   const drawDependencyLines = () => {
-    if (!ganttRef.current) {
-      console.log('No ganttRef.current');
-      return;
-    }
+    if (!ganttRef.current) return;
 
     const svg = ganttRef.current.querySelector('.gantt-dependency-lines');
-    if (!svg) {
-      console.log('No SVG element found');
-      return;
-    }
-
-    console.log('Starting to draw dependency lines');
+    if (!svg) return;
 
     // Clear existing lines
     while (svg.firstChild) {
       svg.removeChild(svg.firstChild);
     }
 
-    // Add marker definition for arrow
-    const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
-    const marker = document.createElementNS('http://www.w3.org/2000/svg', 'marker');
-    marker.setAttribute('id', 'arrowhead');
-    marker.setAttribute('markerWidth', '10');
-    marker.setAttribute('markerHeight', '7');
-    marker.setAttribute('refX', '9');
-    marker.setAttribute('refY', '3.5');
-    marker.setAttribute('orient', 'auto');
-    
-    const polygon = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
-    polygon.setAttribute('points', '0 0, 10 3.5, 0 7');
-    polygon.setAttribute('fill', '#666');
-    
-    marker.appendChild(polygon);
-    defs.appendChild(marker);
-    svg.appendChild(defs);
-
-    // Log the number of dependencies we're trying to draw
-    console.log(`Drawing ${dependencies.length} dependency lines`);
-
-    dependencies.forEach((dep, index) => {
-      console.log(`Processing dependency ${index + 1}:`, dep);
-      
+    dependencies.forEach((dep) => {
       const predecessor = features.find(f => f.id === dep.predecessorId);
       const successor = features.find(f => f.id === dep.successorId);
 
-      if (!predecessor || !successor) {
-        console.log('Missing feature for dependency:', { dep, predecessor, successor });
-        return;
-      }
+      if (!predecessor || !successor) return;
 
-      console.log('Found features for dependency:', { 
-        predecessor: predecessor.title, 
-        successor: successor.title 
-      });
+      const predBar = document.querySelector(`[data-feature-id="${predecessor.id}"]`);
+      const succBar = document.querySelector(`[data-feature-id="${successor.id}"]`);
 
-      // Use setTimeout to delay the DOM query to ensure elements are rendered
-      setTimeout(() => {
-        const predBar = document.querySelector(`[data-feature-id="${predecessor.id}"]`);
-        const succBar = document.querySelector(`[data-feature-id="${successor.id}"]`);
+      if (!predBar || !succBar) return;
 
-        if (!predBar || !succBar) {
-          console.log('Missing DOM elements for features:', { 
-            predId: predecessor.id, 
-            succId: successor.id,
-            predBar: !!predBar,
-            succBar: !!succBar
-          });
-          return;
-        }
+      const predRect = predBar.getBoundingClientRect();
+      const succRect = succBar.getBoundingClientRect();
+      const svgRect = svg.getBoundingClientRect();
 
-        console.log('Found DOM elements for features');
+      // Calculate connection points
+      const startX = predRect.right - svgRect.left;
+      const startY = predRect.top + (predRect.height / 2) - svgRect.top;
+      const endX = succRect.left - svgRect.left;
+      const endY = succRect.top + (succRect.height / 2) - svgRect.top;
 
-        const predRect = predBar.getBoundingClientRect();
-        const succRect = succBar.getBoundingClientRect();
-        const svgRect = svg.getBoundingClientRect();
+      // Create group for the dependency
+      const group = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+      group.setAttribute('class', 'dependency-group');
 
-        // Calculate connection points
-        const startX = predRect.right - svgRect.left;
-        const startY = predRect.top + (predRect.height / 2) - svgRect.top;
-        const endX = succRect.left - svgRect.left;
-        const endY = succRect.top + (succRect.height / 2) - svgRect.top;
+      // Calculate the path with a gentle curve
+      const horizontalDistance = endX - startX;
+      const curveOffset = Math.min(Math.abs(horizontalDistance) * 0.2, 30);
+      const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      
+      // Create a subtle curved path
+      const pathD = `
+        M ${startX},${startY}
+        C ${startX + curveOffset},${startY}
+          ${endX - curveOffset},${endY}
+          ${endX},${endY}
+      `;
+      
+      path.setAttribute('d', pathD);
+      path.setAttribute('class', 'dependency-line');
 
-        console.log('Drawing line:', { 
-          start: { x: startX, y: startY },
-          end: { x: endX, y: endY }
-        });
-
-        // Calculate control points for a smoother curve
-        const distance = endX - startX;
-        const controlPoint1X = startX + distance * 0.4;
-        const controlPoint2X = endX - distance * 0.4;
-
-        // Create group for the dependency
-        const group = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-        group.setAttribute('class', 'dependency-group');
-
-        // Create the curved path
-        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-        path.setAttribute('d', `M ${startX},${startY} C ${controlPoint1X},${startY} ${controlPoint2X},${endY} ${endX},${endY}`);
-        path.setAttribute('class', 'dependency-line');
-        path.setAttribute('marker-end', 'url(#arrowhead)');
-
-        // Create start dot
-        const startDot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-        startDot.setAttribute('cx', startX);
-        startDot.setAttribute('cy', startY);
-        startDot.setAttribute('r', '4');
-        startDot.setAttribute('class', 'dependency-dot');
-
-        // Create end dot
-        const endDot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-        endDot.setAttribute('cx', endX);
-        endDot.setAttribute('cy', endY);
-        endDot.setAttribute('r', '4');
-        endDot.setAttribute('class', 'dependency-dot');
-
-        // Add tooltip title
-        const title = document.createElementNS('http://www.w3.org/2000/svg', 'title');
-        title.textContent = `${predecessor.title} → ${successor.title}`;
-        group.appendChild(title);
-
-        // Append elements to group
-        group.appendChild(path);
-        group.appendChild(startDot);
-        group.appendChild(endDot);
-        
-        // Append group to SVG
-        svg.appendChild(group);
-        
-        console.log('Dependency line drawn successfully');
-      }, 100 * index); // Stagger the drawing to avoid race conditions
+      group.appendChild(path);
+      svg.appendChild(group);
     });
   };
+
+  useEffect(() => {
+    if (!loading && features.length > 0) {
+      console.log('Redrawing dependencies...'); // Debug log
+      requestAnimationFrame(() => {
+        drawDependencyLines();
+      });
+    }
+  }, [loading, features, dependencies]);
 
   const generateDates = () => {
     const dates = [];
@@ -417,6 +309,7 @@ const EnhancedGanttView = () => {
         })}
         
         <svg className="gantt-dependency-lines">
+          {/* Dependencies will be drawn here */}
         </svg>
         
         {hoveredTask && (
@@ -458,7 +351,7 @@ const EnhancedGanttView = () => {
   }
 
   return (
-    <Paper className="enhanced-gantt-view">
+    <Paper className="enhanced-gantt-view modern">
       <div className="gantt-controls">
         <FormControlLabel
           control={
