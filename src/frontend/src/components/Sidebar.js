@@ -15,14 +15,14 @@ const Sidebar = ({ isOpen }) => {
           </li>
           <li className="nav-item">
             <NavLink to="/gantt" className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}>
-              <i className="fas fa-chart-bar"></i>
-              <span>Gantt View</span>
+              <span className="nav-icon">📊</span>
+              <span className="nav-text">Gantt View</span>
             </NavLink>
           </li>
           <li className="nav-item">
             <NavLink to="/enhanced-gantt" className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}>
-              <i className="fas fa-project-diagram"></i>
-              <span>Enhanced Gantt</span>
+              <span className="nav-icon">📈</span>
+              <span className="nav-text">Enhanced Gantt</span>
             </NavLink>
           </li>
           <li className="nav-item">

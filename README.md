@@ -24,7 +24,7 @@ A comprehensive product roadmap management application with both backend and fro
 1. Clone this repository
 2. Install dependencies:
    ```
-   npm install
+   
    ```
 3. Start the backend server:
    ```
