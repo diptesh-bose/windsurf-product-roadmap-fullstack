@@ -1,26 +1,32 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import '../styles/Header.css';
+import '../styles/Navigation.css';
 
 const Header = ({ toggleSidebar }) => {
   return (
-    <header className="header">
-      <div className="header-left">
-        <button className="menu-toggle" onClick={toggleSidebar}>
-          <i className="fas fa-bars"></i>
+    <header className="nav-container">
+      <div className="nav-menu">
+        <button className="nav-button" onClick={toggleSidebar}>
           <span className="menu-icon">☰</span>
         </button>
-        <Link to="/" className="logo">
-          <h1>Product Roadmap Tool</h1>
+        <Link to="/" className="nav-logo">
+          Product Roadmap Tool
         </Link>
-      </div>
-      <div className="header-right">
-        <div className="header-actions">
-          <Link to="/features/new" className="btn btn-primary">
-            <span className="btn-icon">+</span> New Feature
+        <div className="nav-menu">
+          <Link to="/enhanced-gantt" className="nav-link">
+            Gantt Chart
           </Link>
-          <Link to="/releases/new" className="btn btn-success">
-            <span className="btn-icon">+</span> New Release
+          <Link to="/kanban" className="nav-link">
+            Kanban Board
+          </Link>
+          <Link to="/releases" className="nav-link">
+            Releases
+          </Link>
+          <Link to="/features/new" className="nav-button">
+            + New Feature
+          </Link>
+          <Link to="/releases/new" className="nav-button secondary">
+            + New Release
           </Link>
         </div>
       </div>

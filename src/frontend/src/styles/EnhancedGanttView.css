@@ -29,16 +29,22 @@
 
 /* Gantt container */
 .gantt-container {
+  background-color: #ffffff;
+  border: 1px solid #666666;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   overflow: hidden;
   margin-bottom: 20px;
-  border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 
 /* Gantt header */
 .gantt-header {
+  color: #000000;
+  border-bottom: 2px solid #666666;
+  padding-bottom: 16px;
+  margin-bottom: 16px;
   background-color: #f8f9fa;
-  border-bottom: 1px solid #e9ecef;
   position: sticky;
   top: 0;
   z-index: 10;
@@ -216,23 +222,58 @@
 
 .dependency-line {
   fill: none;
-  stroke: rgba(107, 119, 140, 0.7);
+  stroke: #666666;
   stroke-width: 1.5;
-  stroke-dasharray: 6 3;
-  pointer-events: stroke;
+  stroke-dasharray: 3 2;
+  pointer-events: all;
   animation: dash 1s linear infinite;
+  opacity: 0.8;
+  cursor: pointer;
+  stroke-linecap: butt;
+  stroke-linejoin: miter;
 }
 
-@keyframes dash {
-  to {
-    stroke-dashoffset: -9;
-  }
+.dependency-group circle {
+  r: 0;
+  fill: #666666;
+  transition: r 0.2s ease, fill 0.2s ease;
 }
 
 .dependency-group:hover .dependency-line {
-  stroke: rgba(107, 119, 140, 0.9);
+  stroke: #333333;
   stroke-width: 2;
+  opacity: 1;
   animation-duration: 0.7s;
+  stroke-dasharray: 3 2;
+}
+
+.dependency-group:hover circle {
+  r: 3;
+  fill: #333333;
+}
+
+/* Custom tooltip for dependencies */
+.dependency-tooltip {
+  position: fixed;
+  background-color: #fff;
+  border-radius: 4px;
+  padding: 8px 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  font-size: 12px;
+  pointer-events: none;
+  z-index: 1000;
+  max-width: 300px;
+  border: 1px solid #eee;
+}
+
+.dependency-tooltip .arrow {
+  color: #666;
+  margin: 0 4px;
+}
+
+.dependency-tooltip .feature-name {
+  font-weight: 500;
+  color: #333;
 }
 
 /* Legend */
@@ -380,4 +421,73 @@
 .gantt-body {
   position: relative;
   min-height: 400px;
+}
+
+.feature-bar {
+  fill: #5f249f;
+  stroke: #4c1d7f;
+  stroke-width: 1;
+  rx: 4;
+  ry: 4;
+}
+
+.feature-bar:hover {
+  fill: #7b3cb5;
+  cursor: pointer;
+}
+
+.milestone-marker {
+  fill: #0067b3;
+  stroke: #005799;
+  stroke-width: 1;
+}
+
+.milestone-marker:hover {
+  fill: #0077cc;
+  cursor: pointer;
+}
+
+.timeline-grid line {
+  stroke: #999999;
+  stroke-width: 0.5;
+  stroke-dasharray: 2 2;
+}
+
+.timeline-labels text {
+  fill: #666666;
+  font-size: 12px;
+}
+
+.feature-label {
+  fill: #000000;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.tooltip {
+  background-color: #ffffff;
+  border: 1px solid #666666;
+  border-radius: 4px;
+  padding: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  color: #000000;
+  font-size: 12px;
+  pointer-events: none;
+}
+
+/* Status colors */
+.status-not-started { fill: #999999; }
+.status-in-progress { fill: #5f249f; }
+.status-completed { fill: #0067b3; }
+.status-blocked { fill: #666666; }
+
+/* Priority colors */
+.priority-high { stroke: #5f249f; stroke-width: 2; }
+.priority-medium { stroke: #0067b3; stroke-width: 1.5; }
+.priority-low { stroke: #666666; stroke-width: 1; }
+
+@keyframes dash {
+  to {
+    stroke-dashoffset: -5;
+  }
 }

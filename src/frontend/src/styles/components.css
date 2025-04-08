@@ -1,0 +1,146 @@
+/* Buttons */
+.btn {
+  padding: 8px 16px;
+  border-radius: 4px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+}
+
+.btn-primary {
+  background-color: #5f249f;
+  color: #ffffff;
+}
+
+.btn-primary:hover {
+  background-color: #7b3cb5;
+}
+
+.btn-primary:active {
+  background-color: #4c1d7f;
+}
+
+.btn-secondary {
+  background-color: #0067b3;
+  color: #ffffff;
+}
+
+.btn-secondary:hover {
+  background-color: #0077cc;
+}
+
+.btn-secondary:active {
+  background-color: #005799;
+}
+
+.btn-outline {
+  background-color: transparent;
+  border: 1px solid #666666;
+  color: #666666;
+}
+
+.btn-outline:hover {
+  border-color: #5f249f;
+  color: #5f249f;
+}
+
+/* Cards */
+.card {
+  background-color: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  padding: 16px;
+  border: 1px solid #666666;
+}
+
+/* Form elements */
+.input {
+  border: 1px solid #666666;
+  border-radius: 4px;
+  padding: 8px 12px;
+  font-size: 14px;
+  transition: all 0.2s ease;
+}
+
+.input:focus {
+  border-color: #5f249f;
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(95, 36, 159, 0.2);
+}
+
+.select {
+  border: 1px solid #666666;
+  border-radius: 4px;
+  padding: 8px 12px;
+  font-size: 14px;
+  background-color: #ffffff;
+  cursor: pointer;
+}
+
+.select:focus {
+  border-color: #5f249f;
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(95, 36, 159, 0.2);
+}
+
+/* Labels and text */
+.label {
+  color: #666666;
+  font-size: 14px;
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+
+.text-primary {
+  color: #5f249f;
+}
+
+.text-secondary {
+  color: #0067b3;
+}
+
+.text-grey {
+  color: #666666;
+}
+
+/* Status badges */
+.badge {
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.badge-primary {
+  background-color: rgba(95, 36, 159, 0.15);
+  color: #5f249f;
+}
+
+.badge-secondary {
+  background-color: rgba(0, 103, 179, 0.15);
+  color: #0067b3;
+}
+
+/* Dividers */
+.divider {
+  height: 1px;
+  background-color: #666666;
+  margin: 16px 0;
+}
+
+/* Loading states */
+.loading-spinner {
+  border: 2px solid #666666;
+  border-top-color: #5f249f;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+} 

@@ -50,7 +50,7 @@ router.get('/:id', (req, res) => {
 
 // Create a new feature
 router.post('/', (req, res) => {
-  const { title, description, status, priority, start_date, end_date, release_id } = req.body;
+  const { title, description, status, priority, start_date, end_date, release_id, dependencies } = req.body;
   
   // Validate required fields
   if (!title) {
@@ -64,7 +64,8 @@ router.post('/', (req, res) => {
     priority: priority || 'medium',
     start_date,
     end_date,
-    release_id: release_id || null
+    release_id: release_id || null,
+    dependencies: dependencies || []
   };
   
   Feature.create(newFeature, (err, feature) => {
@@ -78,7 +79,7 @@ router.post('/', (req, res) => {
 // Update a feature
 router.put('/:id', (req, res) => {
   const id = req.params.id;
-  const { title, description, status, priority, start_date, end_date, release_id } = req.body;
+  const { title, description, status, priority, start_date, end_date, release_id, dependencies } = req.body;
   
   // Validate required fields
   if (!title) {
@@ -92,7 +93,8 @@ router.put('/:id', (req, res) => {
     priority: priority || 'medium',
     start_date,
     end_date,
-    release_id: release_id || null
+    release_id: release_id || null,
+    dependencies: dependencies || []
   };
   
   Feature.update(id, updatedFeature, (err, feature) => {

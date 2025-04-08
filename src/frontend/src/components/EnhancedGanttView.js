@@ -4,6 +4,8 @@ import { format, addDays, differenceInDays, startOfWeek, addWeeks } from 'date-f
 import Paper from '@mui/material/Paper';
 import Switch from '@mui/material/Switch';
 import FormControlLabel from '@mui/material/FormControlLabel';
+import * as d3 from 'd3';
+import { colors } from '../styles/theme';
 import '../styles/EnhancedGanttView.css';
 
 const EnhancedGanttView = () => {
@@ -15,7 +17,8 @@ const EnhancedGanttView = () => {
   const [startDate] = useState(startOfWeek(new Date()));
   const [endDate] = useState(addWeeks(startOfWeek(new Date()), 4));
   const [hoveredTask, setHoveredTask] = useState(null);
-  const [useSampleDependencies, setUseSampleDependencies] = useState(false);
+  const [showDependencies, setShowDependencies] = useState(false);
+  const [dependencyTooltip, setDependencyTooltip] = useState(null);
   const ganttRef = useRef(null);
 
   const statusColors = useMemo(() => ({
@@ -34,6 +37,34 @@ const EnhancedGanttView = () => {
     security: '🔒'
   }), []);
 
+  const getStatusColor = (status) => {
+    switch (status.toLowerCase()) {
+      case 'not started':
+        return colors.greyLight;
+      case 'in progress':
+        return colors.primary;
+      case 'completed':
+        return colors.secondary;
+      case 'blocked':
+        return colors.grey;
+      default:
+        return colors.greyLight;
+    }
+  };
+
+  const getPriorityStyle = (priority) => {
+    switch (priority.toLowerCase()) {
+      case 'high':
+        return { stroke: colors.primary, strokeWidth: 2 };
+      case 'medium':
+        return { stroke: colors.secondary, strokeWidth: 1.5 };
+      case 'low':
+        return { stroke: colors.grey, strokeWidth: 1 };
+      default:
+        return { stroke: colors.grey, strokeWidth: 1 };
+    }
+  };
+
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -47,27 +78,16 @@ const EnhancedGanttView = () => {
           ...feature,
           startDate: feature.start_date ? new Date(feature.start_date) : null,
           endDate: feature.end_date ? new Date(feature.end_date) : null,
-          color: statusColors[feature.status] || '#a5b1c2'
+          color: statusColors[feature.status] || '#a5b1c2',
+          dependencies: Array.isArray(feature.dependencies) ? feature.dependencies : []
         }));
         
-        // Create sample dependencies if enabled
         let dependencyArray = [];
-        if (useSampleDependencies) {
-          // Create sample dependencies between consecutive features
-          for (let i = 0; i < featuresData.length - 1; i++) {
-            if (featuresData[i].startDate && featuresData[i].endDate && 
-                featuresData[i + 1].startDate && featuresData[i + 1].endDate) {
-              dependencyArray.push({
-                id: `${featuresData[i].id}-${featuresData[i + 1].id}`,
-                predecessorId: featuresData[i].id,
-                successorId: featuresData[i + 1].id
-              });
-            }
-          }
-        } else {
-          // Use real dependencies from the features data
+        
+        if (showDependencies) {
+          // Use real dependencies from the database
           featuresData.forEach(feature => {
-            if (feature.dependencies && Array.isArray(feature.dependencies)) {
+            if (feature.dependencies && feature.dependencies.length > 0) {
               feature.dependencies.forEach(depId => {
                 const dependsOnFeature = featuresData.find(f => f.id === depId);
                 if (dependsOnFeature) {
@@ -82,7 +102,7 @@ const EnhancedGanttView = () => {
           });
         }
 
-        console.log('Dependencies:', dependencyArray); // Debug log
+        console.log('Dependencies:', dependencyArray);
         
         setFeatures(featuresData);
         setDependencies(dependencyArray);
@@ -96,7 +116,24 @@ const EnhancedGanttView = () => {
     };
 
     fetchData();
-  }, [useSampleDependencies, statusColors]);
+  }, [showDependencies, statusColors]);
+
+  const handleDependencyMouseEnter = (e, predecessor, successor) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const mouseX = e.clientX;
+    const mouseY = e.clientY;
+    
+    setDependencyTooltip({
+      predecessor,
+      successor,
+      x: mouseX,
+      y: mouseY - 40 // Position above the cursor
+    });
+  };
+
+  const handleDependencyMouseLeave = () => {
+    setDependencyTooltip(null);
+  };
 
   const drawDependencyLines = () => {
     if (!ganttRef.current) return;
@@ -133,24 +170,69 @@ const EnhancedGanttView = () => {
       // Create group for the dependency
       const group = document.createElementNS('http://www.w3.org/2000/svg', 'g');
       group.setAttribute('class', 'dependency-group');
+      group.addEventListener('mouseenter', (e) => handleDependencyMouseEnter(e, predecessor, successor));
+      group.addEventListener('mouseleave', handleDependencyMouseLeave);
 
-      // Calculate the path with a gentle curve
-      const horizontalDistance = endX - startX;
-      const curveOffset = Math.min(Math.abs(horizontalDistance) * 0.2, 30);
+      // Create a path with right angles
       const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
       
-      // Create a subtle curved path
-      const pathD = `
-        M ${startX},${startY}
-        C ${startX + curveOffset},${startY}
-          ${endX - curveOffset},${endY}
-          ${endX},${endY}
-      `;
+      // Calculate the path with right angles that avoids overlapping
+      const dx = endX - startX;
+      const dy = endY - startY;
+      
+      let pathD;
+      
+      if (dy === 0) {
+        // If on same level, just draw a horizontal line with a small vertical offset
+        const verticalOffset = predRect.height * 0.75;
+        pathD = `
+          M ${startX},${startY}
+          h 10
+          V ${startY + verticalOffset}
+          H ${endX - 10}
+          V ${endY}
+          H ${endX}
+        `;
+      } else {
+        // Calculate the midpoint for vertical movement
+        const midX = startX + 20; // Fixed horizontal offset from predecessor
+        
+        // Determine if we need to route above or below the bars
+        const routeAbove = endY < startY;
+        const verticalOffset = routeAbove ? -15 : 15; // Offset from the bars
+        
+        pathD = `
+          M ${startX},${startY}
+          h 10
+          V ${startY + verticalOffset}
+          H ${endX - 10}
+          V ${endY}
+          H ${endX}
+        `;
+      }
       
       path.setAttribute('d', pathD);
       path.setAttribute('class', 'dependency-line');
 
+      // Add endpoint circles
+      const startCircle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+      startCircle.setAttribute('cx', startX);
+      startCircle.setAttribute('cy', startY);
+
+      const endCircle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+      endCircle.setAttribute('cx', endX);
+      endCircle.setAttribute('cy', endY);
+
+      // Add elements to group
       group.appendChild(path);
+      group.appendChild(startCircle);
+      group.appendChild(endCircle);
+
+      // Add title for tooltip
+      const title = document.createElementNS('http://www.w3.org/2000/svg', 'title');
+      title.textContent = `${predecessor.title} → ${successor.title}`;
+      group.appendChild(title);
+
       svg.appendChild(group);
     });
   };
@@ -356,12 +438,12 @@ const EnhancedGanttView = () => {
         <FormControlLabel
           control={
             <Switch
-              checked={useSampleDependencies}
-              onChange={(e) => setUseSampleDependencies(e.target.checked)}
+              checked={showDependencies}
+              onChange={(e) => setShowDependencies(e.target.checked)}
               color="primary"
             />
           }
-          label="Show sample dependencies"
+          label="Show Dependencies"
         />
       </div>
       <div className="gantt-container" ref={ganttRef}>
@@ -372,6 +454,20 @@ const EnhancedGanttView = () => {
         </div>
       </div>
       
+      {dependencyTooltip && (
+        <div 
+          className="dependency-tooltip"
+          style={{
+            left: dependencyTooltip.x,
+            top: dependencyTooltip.y
+          }}
+        >
+          <span className="feature-name">{dependencyTooltip.predecessor.title}</span>
+          <span className="arrow">→</span>
+          <span className="feature-name">{dependencyTooltip.successor.title}</span>
+        </div>
+      )}
+
       <div className="gantt-legend">
         <h3>Legend</h3>
         <div className="legend-item">
@@ -383,16 +479,16 @@ const EnhancedGanttView = () => {
           <span>Backlog</span>
         </div>
         <div className="legend-item">
-          <div className="legend-color" style={{ backgroundColor: '#4cd137' }}></div>
-          <span>Completed</span>
+          <div className="legend-color" style={{ backgroundColor: '#00b894' }}></div>
+          <span>In Progress</span>
         </div>
         <div className="legend-item">
           <div className="legend-color" style={{ backgroundColor: '#fdcb6e' }}></div>
           <span>In Review</span>
         </div>
         <div className="legend-item">
-          <div className="legend-color" style={{ backgroundColor: '#00b894' }}></div>
-          <span>In Progress</span>
+          <div className="legend-color" style={{ backgroundColor: '#4cd137' }}></div>
+          <span>Completed</span>
         </div>
       </div>
     </Paper>
