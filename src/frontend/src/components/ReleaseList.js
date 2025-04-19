@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
+import { FaChevronDown } from 'react-icons/fa';
 import '../styles/ReleaseList.css';
 
 const ReleaseList = () => {
@@ -9,6 +10,12 @@ const ReleaseList = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
+  const [expandedRelease, setExpandedRelease] = useState(null);
+
+  // toggle accordion open/closed
+  const toggleExpand = (releaseId) => {
+    setExpandedRelease(expandedRelease === releaseId ? null : releaseId);
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -61,6 +68,11 @@ const ReleaseList = () => {
     }
   };
 
+  // Get release features
+  const getReleaseFeatures = (releaseId) => {
+    return features.filter(f => f.release_id === releaseId);
+  };
+
   if (loading) {
     return <div className="loading">Loading releases...</div>;
   }
@@ -76,88 +88,106 @@ const ReleaseList = () => {
       
       {error && <div className="error-message">{error}</div>}
       
-      {releases.length > 0 ? (
-        <div className="card">
-          <table className="table">
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>Status</th>
-                <th>Start Date</th>
-                <th>End Date</th>
-                <th>Features</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {releases.map(release => (
-                <tr key={release.id}>
-                  <td>
-                    <Link to={`/releases/edit/${release.id}`} className="release-name">
-                      {release.name}
-                    </Link>
-                    {release.description && (
-                      <div className="release-description">
-                        {release.description.length > 50
-                          ? `${release.description.substring(0, 50)}...`
-                          : release.description}
-                      </div>
-                    )}
-                  </td>
-                  <td>
-                    <span className={`status-badge status-${release.status}`}>
-                      {release.status}
-                    </span>
-                  </td>
-                  <td>{new Date(release.start_date).toLocaleDateString()}</td>
-                  <td>{new Date(release.end_date).toLocaleDateString()}</td>
-                  <td>{getFeatureCount(release.id)}</td>
-                  <td>
-                    {deleteConfirm === release.id ? (
-                      <div className="delete-confirm">
-                        <span>Are you sure?</span>
-                        <button 
-                          className="btn btn-danger btn-sm" 
-                          onClick={() => deleteRelease(release.id)}
+      <div className="release-table-container">
+        <table className="release-table">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Status</th>
+              <th>Start Date</th>
+              <th>End Date</th>
+              <th>Features</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {releases.map(release => {
+              const isExpanded = expandedRelease === release.id;
+              const featureCount = getFeatureCount(release.id);
+              
+              return (
+                <React.Fragment key={release.id}>
+                  {/* Main release row */}
+                  <tr className="release-row">
+                    <td>
+                      <Link to={`/releases/edit/${release.id}`}>
+                        {release.name}
+                      </Link>
+                    </td>
+                    <td>
+                      <span className={`status status-${release.status.toLowerCase()}`}>
+                        {release.status}
+                      </span>
+                    </td>
+                    <td>{new Date(release.start_date).toLocaleDateString()}</td>
+                    <td>{new Date(release.end_date).toLocaleDateString()}</td>
+                    <td className="feature-count">
+                      {featureCount}
+                      {featureCount > 0 && (
+                        <button
+                          onClick={() => toggleExpand(release.id)}
+                          className="features-btn"
+                          title="View features"
                         >
-                          Yes
+                          <FaChevronDown className={`chevron ${isExpanded ? 'rotate' : ''}`} />
                         </button>
-                        <button 
-                          className="btn btn-secondary btn-sm" 
-                          onClick={cancelDelete}
-                        >
-                          No
-                        </button>
-                      </div>
-                    ) : (
-                      <div className="action-buttons">
-                        <Link 
-                          to={`/releases/edit/${release.id}`} 
-                          className="btn btn-secondary btn-sm"
-                        >
-                          Edit
-                        </Link>
-                        <button 
-                          className="btn btn-danger btn-sm" 
-                          onClick={() => confirmDelete(release.id)}
-                        >
-                          Delete
-                        </button>
-                      </div>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      ) : (
-        <div className="empty-state card">
+                      )}
+                    </td>
+                    <td>
+                      {deleteConfirm === release.id ? (
+                        <div className="delete-confirm">
+                          <span>Delete?</span>
+                          <button onClick={() => deleteRelease(release.id)} className="btn btn-danger btn-sm">Yes</button>
+                          <button onClick={cancelDelete} className="btn btn-secondary btn-sm">No</button>
+                        </div>
+                      ) : (
+                        <div className="action-buttons">
+                          <button
+                            onClick={() => toggleExpand(release.id)}
+                            className="btn btn-info btn-sm features-btn"
+                          >
+                            Features
+                            <FaChevronDown className={`chevron ${isExpanded ? 'rotate' : ''}`} />
+                          </button>
+                          <Link to={`/releases/edit/${release.id}`} className="btn btn-secondary btn-sm">Edit</Link>
+                          <button onClick={() => confirmDelete(release.id)} className="btn btn-danger btn-sm">Delete</button>
+                        </div>
+                      )}
+                    </td>
+                  </tr>
+                  
+                  {/* Features accordion row */}
+                  {isExpanded && (
+                    <tr className="feature-row">
+                      <td colSpan="6">
+                        <div className="feature-list">
+                          {getReleaseFeatures(release.id).length > 0 ? (
+                            <ul>
+                              {getReleaseFeatures(release.id).map(feature => (
+                                <li key={feature.id}>
+                                  • {feature.name || feature.title}
+                                </li>
+                              ))}
+                            </ul>
+                          ) : (
+                            <p className="no-features">No features assigned to this release.</p>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                </React.Fragment>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+      
+      {releases.length === 0 && (
+        <div className="empty-state">
           <p>No releases found.</p>
           <p>Create your first release to start planning your product roadmap.</p>
-          <Link to="/releases/new" className="btn btn-primary">
-            Create Release
-          </Link>
+          <Link to="/releases/new" className="btn btn-primary">Create Release</Link>
         </div>
       )}
     </div>
