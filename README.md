@@ -10,6 +10,20 @@ A comprehensive product roadmap management application with both backend and fro
 - **Release Planning**: Group features into releases for better planning
 - **SQLite Database**: Lightweight database for storing all roadmap data
 
+## Screenshots
+
+### Releases Overview
+![Releases Page](/screenshots/releases-overview.png)
+
+### Release Details with Features
+![Release Details](/screenshots/release-details.png)
+
+### Kanban Board View
+![Kanban Board](/screenshots/kanban-view.png)
+
+### Gantt Chart View
+![Gantt Chart](/screenshots/gantt-chart.png)
+
 ## Tech Stack
 
 - **Backend**: Node.js with Express
